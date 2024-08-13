@@ -8,7 +8,6 @@ import (
 	"github.com/appwrite/sdk-for-go/databases"
 	"github.com/appwrite/sdk-for-go/functions"
 	"github.com/appwrite/sdk-for-go/id"
-	"github.com/appwrite/sdk-for-go/models"
 	"github.com/appwrite/sdk-for-go/permission"
 	"github.com/appwrite/sdk-for-go/storage"
 	"github.com/appwrite/sdk-for-go/users"
@@ -18,19 +17,18 @@ var appwrite_project = "<PROJECT_ID>"
 var appwrite_api_key = "<API_KEY>"
 
 var (
-	appwriteClient     client.Client
-	appwriteCollection *models.Collection
-	document_id        string
-	database_id        string
-	function_id        string
-	collection_id      string
-	user_id            string
-	bucket_id          string
-	file_id            string
-	appwriteDatabase   *databases.Databases
-	appwriteUsers      *users.Users
-	appwriteStorage    *storage.Storage
-	appwriteFunction   *functions.Functions
+	appwriteClient   client.Client
+	appwriteDatabase *databases.Databases
+	appwriteFunction *functions.Functions
+	appwriteUsers    *users.Users
+	appwriteStorage  *storage.Storage
+	database_id      string
+	collection_id    string
+	document_id      string
+	user_id          string
+	bucket_id        string
+	file_id          string
+	function_id      string
 )
 
 func main() {
@@ -40,26 +38,32 @@ func main() {
 	)
 
 	appwriteDatabase = appwrite.NewDatabases(appwriteClient)
+	appwriteFunction = appwrite.NewFunctions(appwriteClient)
 	appwriteUsers = appwrite.NewUsers(appwriteClient)
 	appwriteStorage = appwrite.NewStorage(appwriteClient)
-	appwriteFunction = appwrite.NewFunctions(appwriteClient)
 
 	CreateUser()
 	ListUsers()
 	DeleteUsers()
+
 	CreateDatabase()
 	DeleteDatabase()
+
 	CreateCollection()
 	ListCollection()
 	DeleteCollection()
+
 	CreateDocument()
 	ListDocuments()
 	DeleteDocument()
+
 	CreateBucket()
 	ListBuckets()
+	DeleteBucket()
+
 	// UploadFile() TODO: Fix how we send content range etc in SDK Go
 	ListFiles()
-	DeleteBucket()
+
 	CreateFunction()
 	ListFunctions()
 	DeleteFunction()
@@ -68,7 +72,6 @@ func main() {
 }
 
 func CreateUser() {
-
 	fmt.Println("Running Create user API")
 
 	user, _ := appwriteUsers.Create(
@@ -101,7 +104,6 @@ func DeleteUsers() {
 }
 
 func CreateDatabase() {
-
 	fmt.Println("Running Create Database API")
 
 	database, _ := appwriteDatabase.Create(id.Unique(), "Movies")
@@ -120,10 +122,9 @@ func DeleteDatabase() {
 }
 
 func CreateCollection() {
-
 	fmt.Println("Running Create Collection API")
 
-	appwriteCollection, _ = appwriteDatabase.CreateCollection(
+	appwriteCollection, _ := appwriteDatabase.CreateCollection(
 		database_id,
 		id.Unique(),
 		"Movies",
@@ -205,13 +206,17 @@ func DeleteCollection() {
 func CreateDocument() {
 	fmt.Println("Running Create Document API")
 
-	document, _ := appwriteDatabase.CreateDocument(database_id, collection_id, id.Unique(), map[string]interface{}{
-		"name":         "Spider Man",
-		"release_year": 1920,
-		"rating":       99,
-		"kids":         false,
-		"email":        "example@email.com",
-	})
+	document, _ := appwriteDatabase.CreateDocument(
+		database_id,
+		collection_id,
+		id.Unique(),
+		map[string]interface{}{
+			"name":         "Spider Man",
+			"release_year": 1920,
+			"rating":       99,
+			"kids":         false,
+			"email":        "example@email.com",
+		})
 
 	document_id = document.Id
 
@@ -229,7 +234,11 @@ func ListDocuments() {
 func DeleteDocument() {
 	fmt.Println("Running Delete Document API")
 
-	response, _ := appwriteDatabase.DeleteDocument(database_id, collection_id, document_id)
+	response, _ := appwriteDatabase.DeleteDocument(
+		database_id,
+		collection_id,
+		document_id,
+	)
 
 	fmt.Println(response)
 }
@@ -237,7 +246,15 @@ func DeleteDocument() {
 func CreateBucket() {
 	fmt.Println("Running Create Bucket API")
 
-	bucket, _ := appwriteStorage.CreateBucket(id.Unique(), "awesome-bucket", appwriteStorage.WithCreateBucketFileSecurity(false), appwriteStorage.WithCreateBucketPermissions([]string{permission.Read("any"), permission.Create("any")}))
+	bucket, _ := appwriteStorage.CreateBucket(
+		id.Unique(),
+		"awesome-bucket",
+		appwriteStorage.WithCreateBucketFileSecurity(false),
+		appwriteStorage.WithCreateBucketPermissions(
+			[]string{
+				permission.Read("any"),
+				permission.Create("any"),
+			}))
 
 	bucket_id = bucket.Id
 
@@ -254,14 +271,16 @@ func ListBuckets() {
 }
 
 // func UploadFile() { // TODO: Fix how we send content range etc in SDK Go
-// 		fmt.Println("Running Upload File API")
+// 	fmt.Println("Running Upload File API")
 
-// 		var file, err = appwriteStorage.CreateFile(bucket_id, id.Unique(), file.NewInputFile("./resources/nature.jpg", "file.jpg"), appwriteStorage.WithCreateFilePermissions([]string{permission.Read("any")}))
-
-// 	if err != nil {
-// 		fmt.Println(err)
-// 		return
-// 	}
+// 	var file, _ = appwriteStorage.CreateFile(
+// 		bucket_id,
+// 		id.Unique(),
+// 		file.NewInputFile("./resources/nature.jpg", "file.jpg"),
+// 		appwriteStorage.WithCreateFilePermissions(
+// 			[]string{
+// 				permission.Read("any"),
+// 			}))
 
 // 	file_id = file.Id
 
@@ -295,7 +314,14 @@ func DeleteBucket() {
 func CreateFunction() {
 	fmt.Println("Running Create Function API")
 
-	var function, _ = appwriteFunction.Create(id.Unique(), "Test Function", "python-3.9", appwriteFunction.WithCreateExecute([]string{permission.Read("any")}))
+	var function, _ = appwriteFunction.Create(
+		id.Unique(),
+		"Test Function",
+		"python-3.9",
+		appwriteFunction.WithCreateExecute(
+			[]string{
+				permission.Read("any"),
+			}))
 
 	function_id = function.Id
 
