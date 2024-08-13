@@ -17,8 +17,8 @@ This playground doesn't include any Go best practices but rather it's intended t
 
 1. Clone this repository.
 2. `cd` into the repository.
-3. Open the `app.go` file found in the root of the cloned repository.
-4. Copy Project ID, endpoint and API key from Appwrite console into `app.go`
+3. Open the `playground.go` file found in the root of the cloned repository.
+4. Copy Project ID, endpoint and API key from Appwrite console into `playground.go`
 5. Run the playground:
     Go:
         - Install dependencies `go get`
