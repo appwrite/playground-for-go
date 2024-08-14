@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/appwrite/sdk-for-go/account"
 	"github.com/appwrite/sdk-for-go/appwrite"
 	"github.com/appwrite/sdk-for-go/client"
 	"github.com/appwrite/sdk-for-go/databases"
@@ -23,8 +24,9 @@ var (
 	appwriteClient   client.Client
 	appwriteDatabase *databases.Databases
 	appwriteFunction *functions.Functions
-	appwriteUsers    *users.Users
 	appwriteStorage  *storage.Storage
+	appwriteAccount  *account.Account
+	appwriteUsers    *users.Users
 	databaseId       string
 	collectionId     string
 	documentId       string
@@ -38,13 +40,16 @@ func main() {
 	appwriteClient = appwrite.NewClient(
 		appwrite.WithProject(appwriteProject),
 		appwrite.WithKey(appwriteApiKey),
+		// appwrite.WithJWT("JWT") // Use this to authenticate with JWT instead of API_KEY
 	)
 
 	appwriteDatabase = appwrite.NewDatabases(appwriteClient)
 	appwriteFunction = appwrite.NewFunctions(appwriteClient)
 	appwriteUsers = appwrite.NewUsers(appwriteClient)
 	appwriteStorage = appwrite.NewStorage(appwriteClient)
+	appwriteAccount = appwrite.NewAccount(appwriteClient)
 
+	// GetAccount() // Use this only with JWT
 	CreateUser()
 	ListUsers()
 	DeleteUser()
@@ -63,8 +68,9 @@ func main() {
 	CreateBucket()
 	ListBuckets()
 
-	// // UploadFile() TODO: Fix how we send content range etc in SDK Go
+	// UploadFile() TODO: Fix how we send content range etc in SDK Go
 	ListFiles()
+	DeleteFile()
 
 	DeleteBucket()
 
@@ -103,6 +109,14 @@ func ListUsers() {
 	users, _ := appwriteUsers.List()
 
 	print(users)
+}
+
+func GetAccount() {
+	fmt.Println("Running List Users API")
+
+	response, _ := appwriteAccount.Get()
+
+	print(response)
 }
 
 func DeleteUser() {
@@ -211,7 +225,9 @@ func CreateCollection() {
 func ListCollection() {
 	fmt.Println("Running List Collection API")
 
-	var collections, _ = appwriteDatabase.List()
+	var collections, _ = appwriteDatabase.ListCollections(
+		databaseId,
+	)
 
 	print(collections)
 }
