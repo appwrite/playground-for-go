@@ -1,7 +1,10 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"strconv"
+	"time"
 
 	"github.com/appwrite/sdk-for-go/appwrite"
 	"github.com/appwrite/sdk-for-go/client"
@@ -13,8 +16,8 @@ import (
 	"github.com/appwrite/sdk-for-go/users"
 )
 
-var appwrite_project = "<PROJECT_ID>"
-var appwrite_api_key = "<API_KEY>"
+var appwriteProject = "<PROJECT_ID>"
+var appwriteApiKey = "<API_KEY>"
 
 var (
 	appwriteClient   client.Client
@@ -22,19 +25,19 @@ var (
 	appwriteFunction *functions.Functions
 	appwriteUsers    *users.Users
 	appwriteStorage  *storage.Storage
-	database_id      string
-	collection_id    string
-	document_id      string
-	user_id          string
-	bucket_id        string
-	file_id          string
-	function_id      string
+	databaseId       string
+	collectionId     string
+	documentId       string
+	userId           string
+	bucketId         string
+	fileId           string
+	functionId       string
 )
 
 func main() {
 	appwriteClient = appwrite.NewClient(
-		appwrite.WithProject(appwrite_project),
-		appwrite.WithKey(appwrite_api_key),
+		appwrite.WithProject(appwriteProject),
+		appwrite.WithKey(appwriteApiKey),
 	)
 
 	appwriteDatabase = appwrite.NewDatabases(appwriteClient)
@@ -44,25 +47,26 @@ func main() {
 
 	CreateUser()
 	ListUsers()
-	DeleteUsers()
+	DeleteUser()
 
 	CreateDatabase()
-	DeleteDatabase()
 
 	CreateCollection()
 	ListCollection()
-	DeleteCollection()
 
 	CreateDocument()
 	ListDocuments()
-	DeleteDocument()
 
+	DeleteDocument()
+	DeleteCollection()
+	DeleteDatabase()
 	CreateBucket()
 	ListBuckets()
-	DeleteBucket()
 
-	// UploadFile() TODO: Fix how we send content range etc in SDK Go
+	// // UploadFile() TODO: Fix how we send content range etc in SDK Go
 	ListFiles()
+
+	DeleteBucket()
 
 	CreateFunction()
 	ListFunctions()
@@ -71,20 +75,26 @@ func main() {
 	fmt.Println("Successfully ran playground!")
 }
 
+func print(data interface{}) {
+	b, _ := json.MarshalIndent(data, "", "  ")
+	fmt.Println(string(b))
+}
+
 func CreateUser() {
 	fmt.Println("Running Create user API")
 
+	var name = strconv.Itoa(int(time.Now().Unix()))
+
 	user, _ := appwriteUsers.Create(
 		id.Unique(),
-		appwriteUsers.WithCreateEmail("test@example.com"),
-		appwriteUsers.WithCreatePhone("+12065550100"),
-		appwriteUsers.WithCreatePassword("test1234"),
-		appwriteUsers.WithCreateName("test"),
+		appwriteUsers.WithCreateEmail(name+"@example.com"),
+		appwriteUsers.WithCreatePassword(name+"1234"),
+		appwriteUsers.WithCreateName(name),
 	)
 
-	user_id = user.Id
+	userId = user.Id
 
-	fmt.Println(user)
+	print(user)
 }
 
 func ListUsers() {
@@ -92,15 +102,15 @@ func ListUsers() {
 
 	users, _ := appwriteUsers.List()
 
-	fmt.Println(users)
+	print(users)
 }
 
 func DeleteUser() {
 	fmt.Println("Running Delete User API")
 
-	response, _ := appwriteUsers.Delete(user_id)
+	response, _ := appwriteUsers.Delete(userId)
 
-	fmt.Println(response)
+	print(response)
 }
 
 func CreateDatabase() {
@@ -108,76 +118,90 @@ func CreateDatabase() {
 
 	database, _ := appwriteDatabase.Create(id.Unique(), "Movies")
 
-	database_id = database.Id
+	databaseId = database.Id
 
-	fmt.Println(database)
+	print(database)
 }
 
 func DeleteDatabase() {
 	fmt.Println("Running Delete Database API")
 
-	response, _ := appwriteDatabase.Delete(database_id)
+	response, _ := appwriteDatabase.Delete(databaseId)
 
-	fmt.Println(response)
+	print(response)
 }
 
 func CreateCollection() {
 	fmt.Println("Running Create Collection API")
 
 	appwriteCollection, _ := appwriteDatabase.CreateCollection(
-		database_id,
+		databaseId,
 		id.Unique(),
 		"Movies",
-		appwriteDatabase.WithCreateCollectionPermissions([]string{"any"}),
+		appwriteDatabase.WithCreateCollectionPermissions([]string{permission.Create("any")}),
 		appwriteDatabase.WithCreateCollectionDocumentSecurity(true),
 	)
 
-	collection_id = appwriteCollection.Id
+	collectionId = appwriteCollection.Id
+	print(appwriteCollection)
 
-	appwriteDatabase.CreateStringAttribute(
-		database_id,
-		collection_id,
+	nameAttributeResponse, _ := appwriteDatabase.CreateStringAttribute(
+		databaseId,
+		collectionId,
 		"name",
 		255,
 		true,
 	)
 
-	appwriteDatabase.CreateIntegerAttribute(
-		database_id,
-		collection_id,
+	print(nameAttributeResponse)
+
+	yearAttributeResponse, _ := appwriteDatabase.CreateIntegerAttribute(
+		databaseId,
+		collectionId,
 		"release_year",
 		true,
 		appwriteDatabase.WithCreateIntegerAttributeMin(0),
 		appwriteDatabase.WithCreateIntegerAttributeMax(9999),
 	)
 
-	appwriteDatabase.CreateFloatAttribute(
-		database_id,
-		collection_id,
+	print(yearAttributeResponse)
+
+	ratingAttributeResponse, _ := appwriteDatabase.CreateFloatAttribute(
+		databaseId,
+		collectionId,
 		"rating",
 		true,
 		appwriteDatabase.WithCreateFloatAttributeMin(0),
 		appwriteDatabase.WithCreateFloatAttributeMax(99.99),
 	)
 
-	appwriteDatabase.CreateBooleanAttribute(
-		database_id,
-		collection_id,
+	print(ratingAttributeResponse)
+
+	kidsAttributeResponse, _ := appwriteDatabase.CreateBooleanAttribute(
+		databaseId,
+		collectionId,
 		"kids",
 		true,
 	)
 
-	appwriteDatabase.CreateEmailAttribute(
-		database_id,
-		collection_id,
+	print(kidsAttributeResponse)
+
+	emailAttributeResponse, _ := appwriteDatabase.CreateEmailAttribute(
+		databaseId,
+		collectionId,
 		"email",
 		false,
 		appwriteDatabase.WithCreateEmailAttributeDefault("example@email.com"),
 	)
 
+	print(emailAttributeResponse)
+
+	// Wait for attributes to be created
+	time.Sleep(2 * time.Second)
+
 	appwriteDatabase.CreateIndex(
-		database_id,
-		collection_id,
+		databaseId,
+		collectionId,
 		"name_email_idx",
 		"fulltext",
 		[]string{"email"},
@@ -189,26 +213,26 @@ func ListCollection() {
 
 	var collections, _ = appwriteDatabase.List()
 
-	fmt.Println(collections)
+	print(collections)
 }
 
 func DeleteCollection() {
 	fmt.Println("Running Delete Collection API")
 
 	response, _ := appwriteDatabase.DeleteCollection(
-		database_id,
-		collection_id,
+		databaseId,
+		collectionId,
 	)
 
-	fmt.Println(response)
+	print(response)
 }
 
 func CreateDocument() {
 	fmt.Println("Running Create Document API")
 
 	document, _ := appwriteDatabase.CreateDocument(
-		database_id,
-		collection_id,
+		databaseId,
+		collectionId,
 		id.Unique(),
 		map[string]interface{}{
 			"name":         "Spider Man",
@@ -218,29 +242,29 @@ func CreateDocument() {
 			"email":        "example@email.com",
 		})
 
-	document_id = document.Id
+	documentId = document.Id
 
-	fmt.Println(document)
+	print(document)
 }
 
 func ListDocuments() {
 	fmt.Println("Running List Document API")
 
-	documents, _ := appwriteDatabase.ListDocuments(database_id, collection_id)
+	documents, _ := appwriteDatabase.ListDocuments(databaseId, collectionId)
 
-	fmt.Println(documents)
+	print(documents)
 }
 
 func DeleteDocument() {
 	fmt.Println("Running Delete Document API")
 
 	response, _ := appwriteDatabase.DeleteDocument(
-		database_id,
-		collection_id,
-		document_id,
+		databaseId,
+		collectionId,
+		documentId,
 	)
 
-	fmt.Println(response)
+	print(response)
 }
 
 func CreateBucket() {
@@ -256,10 +280,9 @@ func CreateBucket() {
 				permission.Create("any"),
 			}))
 
-	bucket_id = bucket.Id
+	bucketId = bucket.Id
 
-	fmt.Println(bucket)
-
+	print(bucket)
 }
 
 func ListBuckets() {
@@ -267,7 +290,7 @@ func ListBuckets() {
 
 	buckets, _ := appwriteStorage.ListBuckets()
 
-	fmt.Println(buckets)
+	print(buckets)
 }
 
 // func UploadFile() { // TODO: Fix how we send content range etc in SDK Go
@@ -282,33 +305,33 @@ func ListBuckets() {
 // 				permission.Read("any"),
 // 			}))
 
-// 	file_id = file.Id
+// 	fileId = file.Id
 
-// 	fmt.Println(file)
+// 	print(file)
 // }
 
 func ListFiles() {
 	fmt.Println("Running List Files API")
 
-	var files, _ = appwriteStorage.ListFiles(bucket_id)
+	var files, _ = appwriteStorage.ListFiles(bucketId)
 
-	fmt.Println(files)
+	print(files)
 }
 
 func DeleteFile() {
 	fmt.Println("Running Delete File API")
 
-	var response, _ = appwriteStorage.DeleteFile(bucket_id, file_id)
+	var response, _ = appwriteStorage.DeleteFile(bucketId, fileId)
 
-	fmt.Println(response)
+	print(response)
 }
 
 func DeleteBucket() {
 	fmt.Println("Running Delete Bucket API")
 
-	var response, _ = appwriteStorage.DeleteBucket(bucket_id)
+	var response, _ = appwriteStorage.DeleteBucket(bucketId)
 
-	fmt.Println(response)
+	print(response)
 }
 
 func CreateFunction() {
@@ -320,12 +343,12 @@ func CreateFunction() {
 		"python-3.9",
 		appwriteFunction.WithCreateExecute(
 			[]string{
-				permission.Read("any"),
+				"any",
 			}))
 
-	function_id = function.Id
+	functionId = function.Id
 
-	fmt.Println(function)
+	print(function)
 }
 
 func ListFunctions() {
@@ -333,13 +356,13 @@ func ListFunctions() {
 
 	var functions, _ = appwriteFunction.List()
 
-	fmt.Println(functions)
+	print(functions)
 }
 
 func DeleteFunction() {
 	fmt.Println("Running Delete Function API")
 
-	var response, _ = appwriteFunction.Delete(function_id)
+	var response, _ = appwriteFunction.Delete(functionId)
 
-	fmt.Println(response)
+	print(response)
 }
