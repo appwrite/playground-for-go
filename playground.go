@@ -95,7 +95,7 @@ func ListUsers() {
 	fmt.Println(users)
 }
 
-func DeleteUsers() {
+func DeleteUser() {
 	fmt.Println("Running Delete User API")
 
 	response, _ := appwriteUsers.Delete(user_id)
