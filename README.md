@@ -70,4 +70,4 @@ For security issues, kindly email us [security@appwrite.io](mailto:security@appw
 
 ## Follow Us
 
-Join our growing community around the world! Follow us on [X](https://x.com/appwrite), [LinkedIn page](https://www.linkedin.com/company/appwrite/mycompany/), or join our [Discord Server](https://appwrite.io/discord) for more help, ideas and discussions.
+Join our growing community around the world! Follow us on [X](https://x.com/appwrite), [LinkedIn](https://www.linkedin.com/company/appwrite/mycompany/), or join our [Discord Server](https://appwrite.io/discord) for more help, ideas and discussions.
