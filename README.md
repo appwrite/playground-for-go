@@ -20,10 +20,10 @@ This playground doesn't include any Go best practices but rather it's intended t
 3. Open the `playground.go` file found in the root of the cloned repository.
 4. Copy Project ID, endpoint and API key from Appwrite console into `playground.go`
 5. Run the playground:
-    Go:
+    - Go:
         - Install dependencies `go get`
         - Execute the command `go run .`
-    Docker:
+    - Docker:
         - Execute the command `docker compose up`
 6. You will see the JSON response in the console.
 
@@ -70,4 +70,4 @@ For security issues, kindly email us [security@appwrite.io](mailto:security@appw
 
 ## Follow Us
 
-Join our growing community around the world! Follow us on [Twitter](https://twitter.com/appwrite), [Facebook Page](https://www.facebook.com/appwrite.io), [Facebook Group](https://www.facebook.com/groups/appwrite.developers/) or join our [Discord Server](https://appwrite.io/discord) for more help, ideas and discussions.
+Join our growing community around the world! Follow us on [X](https://x.com/appwrite), [LinkedIn page](https://www.linkedin.com/company/appwrite/mycompany/), or join our [Discord Server](https://appwrite.io/discord) for more help, ideas and discussions.
