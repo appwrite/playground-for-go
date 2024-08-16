@@ -13,7 +13,7 @@ This playground doesn't include any Go best practices but rather it's intended t
 * An Appwrite project created in the console.
 * An Appwrite API key created in the console.
 
-### Installation
+## Installation
 
 1. Clone this repository.
 2. `cd` into the repository.
@@ -27,7 +27,7 @@ This playground doesn't include any Go best practices but rather it's intended t
         - Execute the command `docker compose up`
 6. You will see the JSON response in the console.
 
-### API's Covered
+## API's Covered
 
 - Database
     * Create Collection
