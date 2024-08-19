@@ -55,23 +55,19 @@ func main() {
 	DeleteUser()
 
 	CreateDatabase()
-
 	CreateCollection()
 	ListCollection()
-
 	CreateDocument()
 	ListDocuments()
-
 	DeleteDocument()
 	DeleteCollection()
 	DeleteDatabase()
+
 	CreateBucket()
 	ListBuckets()
-
 	// UploadFile() TODO: Fix how we send content range etc in SDK Go
 	ListFiles()
 	DeleteFile()
-
 	DeleteBucket()
 
 	CreateFunction()
