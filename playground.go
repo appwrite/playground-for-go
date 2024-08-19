@@ -28,16 +28,10 @@ type ExampleDocuments struct {
 
 func main() {
 	client := appwrite.NewClient(
-		appwrite.WithEndpoint("http://localhost/v1"), // Replace with your endpoint
-		appwrite.WithProject("bbb"),                  // Replace with your project ID
-		appwrite.WithKey("standard_e04ce0635b5d9de7788131e80555e5219fa83bae25f2c9ba1e4572b191fcfa0184760e82046e688ca39735ec894b91676717e1a8c3fd07e07c7d3264d508eadeaa32cecd584ca5d8717211f180a7a54508012375ab5f6eb9259d8e7c6d48463133ef7ee408a8c0f4bf13f4f66aca84833f710697a1b1891238d668a3dfd5f80a"), // Replace with your API Key
+		appwrite.WithEndpoint("https://cloud.appwrite.io/v1"), // Replace with your endpoint
+		appwrite.WithProject("YOUR_PROJECT_ID"),               // Replace with your project ID
+		appwrite.WithKey("YOUR_API_KEY"),                      // Replace with your API Key
 	)
-
-	//client := appwrite.NewClient(
-	//	appwrite.WithEndpoint("https://cloud.appwrite.io/v1"), // Replace with your endpoint
-	//	appwrite.WithProject("YOUR_PROJECT_ID"),                  // Replace with your project ID
-	//	appwrite.WithKey("YOUR_API_KEY"),                         // Replace with your API Key
-	//)
 
 	databasesSdk := appwrite.NewDatabases(client)
 	storageSdk := appwrite.NewStorage(client)
