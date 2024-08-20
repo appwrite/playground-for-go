@@ -1,5 +1,5 @@
-github.com/appwrite/sdk-for-go v0.0.1-rc.2 h1:kh8p6OmSgA4d7aT1KXE9Z3W99ioDKdhhY1OrKsTLu1I=
-github.com/appwrite/sdk-for-go v0.0.1-rc.2/go.mod h1:aFiOAbfOzGS3811eMCt3T9WDBvjvPVAfOjw10Vghi4E=
+github.com/appwrite/sdk-for-go v0.0.1-rc.8 h1:uZgV1L2336sr6dWuUwu81XpsvbSIzyXO1gJPtq+rwTk=
+github.com/appwrite/sdk-for-go v0.0.1-rc.8/go.mod h1:aFiOAbfOzGS3811eMCt3T9WDBvjvPVAfOjw10Vghi4E=
 github.com/aymanbagabas/go-osc52/v2 v2.0.1 h1:HwpRHbFMcZLEVr42D4p7XBqjyuxQH5SMiErDT4WkJ2k=
 github.com/aymanbagabas/go-osc52/v2 v2.0.1/go.mod h1:uYgXzlJ7ZpABp8OJ+exZzJJhRNQ2ASbcXHWsFqH8hp8=
 github.com/charmbracelet/lipgloss v0.12.1 h1:/gmzszl+pedQpjCOH+wFkZr/N90Snz40J/NR7A0zQcs=

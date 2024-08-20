@@ -2,7 +2,7 @@ module github.com/appwrite/playground-for-go
 
 go 1.22.5
 
-require github.com/appwrite/sdk-for-go v0.0.1-rc.2
+require github.com/appwrite/sdk-for-go v0.0.1-rc.8
 
 require github.com/charmbracelet/lipgloss v0.12.1
 
