@@ -3,15 +3,11 @@ package main
 import (
 	"fmt"
 	"github.com/appwrite/sdk-for-go/appwrite"
-	"github.com/appwrite/sdk-for-go/databases"
 	"github.com/appwrite/sdk-for-go/file"
-	"github.com/appwrite/sdk-for-go/functions"
 	"github.com/appwrite/sdk-for-go/id"
 	"github.com/appwrite/sdk-for-go/models"
 	"github.com/appwrite/sdk-for-go/permission"
 	"github.com/appwrite/sdk-for-go/role"
-	"github.com/appwrite/sdk-for-go/storage"
-	"github.com/appwrite/sdk-for-go/users"
 	"time"
 )
 
@@ -20,79 +16,87 @@ type ExampleDocument struct {
 	Name        string `json:"name"`
 	ReleaseYear int    `json:"release_year"`
 }
-
 type ExampleDocuments struct {
 	models.DocumentList
 	Documents []ExampleDocument `json:"documents"`
 }
 
+var client = appwrite.NewClient(
+	appwrite.WithEndpoint("https://v16.appwrite.org/v1"), // Replace with your endpoint
+	appwrite.WithProject("6697f76e00251b11c823"),         // Replace with your project ID
+	appwrite.WithKey("standard_c321c05842acd04ec9b826eaa6fa5a58adb1c116ceff3915210a4d4dbfc16f0a346da8b5160a364a20f0770d725e70df45782693e01ff0fae2d7078405d0e4c755b4353175d515d6668bf1899df771a88ee80e43805e3a9916f6160534b9c8c21ed5cbe806ee947eb4ef2345bb700779f8b7daa440b68659b255e1e59c2bcaaf"), // Replace with your API Key
+)
+
+var databasesSdk = appwrite.NewDatabases(client)
+var storageSdk = appwrite.NewStorage(client)
+var usersSdk = appwrite.NewUsers(client)
+var functionsSdk = appwrite.NewFunctions(client)
+
+var dbId string
+var collectionId string
+var documentId string
+var bucketId string
+var fileId string
+var userId string
+var functionId string
+
 func main() {
-	client := appwrite.NewClient(
-		appwrite.WithEndpoint("https://cloud.appwrite.io/v1"), // Replace with your endpoint
-		appwrite.WithProject("YOUR_PROJECT_ID"),               // Replace with your project ID
-		appwrite.WithKey("YOUR_API_KEY"),                      // Replace with your API Key
-	)
 
-	databasesSdk := appwrite.NewDatabases(client)
-	storageSdk := appwrite.NewStorage(client)
-	usersSdk := appwrite.NewUsers(client)
-	functionsSdk := appwrite.NewFunctions(client)
+	createDatabase()
+	listDatabases()
+	getDatabase()
+	updateDatabase()
 
-	dbId := createDatabase(databasesSdk)
-	listDatabases(databasesSdk)
-	getDatabase(databasesSdk, dbId)
-	updateDatabase(databasesSdk, dbId)
+	createCollection()
+	listCollections()
+	getCollection()
+	updateCollection()
+	listAttributes()
 
-	collectionId := createCollection(databasesSdk, dbId)
-	listCollections(databasesSdk, dbId)
-	getCollection(databasesSdk, dbId, collectionId)
-	updateCollection(databasesSdk, dbId, collectionId)
-	listAttributes(databasesSdk, dbId, collectionId)
+	createDocument()
+	getDocument()
+	listDocuments()
+	updateDocument()
 
-	documentId := createDocument(databasesSdk, dbId, collectionId)
-	getDocument(databasesSdk, dbId, collectionId, documentId)
-	listDocuments(databasesSdk, dbId, collectionId)
-	updateDocument(databasesSdk, dbId, collectionId, documentId)
+	deleteDocument()
+	deleteCollection()
+	deleteDatabase()
 
-	deleteDocument(databasesSdk, dbId, collectionId, documentId)
-	deleteCollection(databasesSdk, dbId, collectionId)
-	deleteDatabase(databasesSdk, dbId)
+	createBucket()
+	listBuckets()
+	getBucket()
+	updateBucket()
 
-	bucketId := createBucket(storageSdk)
-	listBuckets(storageSdk)
-	getBucket(storageSdk, bucketId)
-	updateBucket(storageSdk, bucketId)
+	uploadFile()
+	listFiles()
+	getFile()
+	updateFile()
+	deleteFile()
+	deleteBucket()
 
-	fileId := uploadFile(storageSdk, bucketId)
-	listFiles(storageSdk, bucketId)
-	getFile(storageSdk, bucketId, fileId)
-	updateFile(storageSdk, bucketId, fileId)
-	deleteFile(storageSdk, bucketId, fileId)
-	deleteBucket(storageSdk, bucketId)
+	createUser()
+	listUsers()
+	getUser()
+	updateUserName()
+	deleteUser()
 
-	userId := createUser(usersSdk)
-	listUsers(usersSdk)
-	getUser(usersSdk, userId)
-	updateUserName(usersSdk, userId)
-	deleteUser(usersSdk, userId)
-
-	functionId := createFunction(functionsSdk)
-	listFunctions(functionsSdk)
-	getFunction(functionsSdk, functionId)
-	uploadDeployment(functionsSdk, functionId)
-	executeSync(functionsSdk, functionId)
-	executeAsync(functionsSdk, functionId)
-	deleteFunction(functionsSdk, functionId)
+	createFunction()
+	listFunctions()
+	getFunction()
+	uploadDeployment()
+	executeSync()
+	executeAsync()
+	deleteFunction()
 }
 
-func createFunction(sdk *functions.Functions) string {
+func createFunction() {
 	Info("\nRunning Create Function API")
 
-	response, err := sdk.Create(
+	response, err := functionsSdk.Create(
 		id.Unique(),
 		"Go Hello World",
 		"go-1.22",
-		sdk.WithCreateExecute([]string{role.Any()}),
+		functionsSdk.WithCreateExecute([]string{role.Any()}),
 	)
 
 	if err != nil {
@@ -100,13 +104,13 @@ func createFunction(sdk *functions.Functions) string {
 	}
 	Success(fmt.Sprintf("Function (%v)\"Go Hello World\" created", response.Id))
 
-	return response.Id
+	functionId = response.Id
 }
 
-func getFunction(sdk *functions.Functions, functionId string) {
+func getFunction() {
 	Info("\nRunning Get Function API")
 
-	response, err := sdk.Get(functionId)
+	response, err := functionsSdk.Get(functionId)
 
 	if err != nil {
 		panic(err)
@@ -115,10 +119,10 @@ func getFunction(sdk *functions.Functions, functionId string) {
 	Success(fmt.Sprintf("(%v) %v - %v", response.Id, response.Name, response.Runtime))
 }
 
-func listFunctions(sdk *functions.Functions) {
+func listFunctions() {
 	Info("\nRunning List Functions API")
 
-	response, err := sdk.List()
+	response, err := functionsSdk.List()
 
 	if err != nil {
 		panic(err)
@@ -130,13 +134,13 @@ func listFunctions(sdk *functions.Functions) {
 	}
 }
 
-func uploadDeployment(sdk *functions.Functions, functionId string) {
+func uploadDeployment() {
 	Info("\nRunning Upload Deployment  API")
-	deployment, err := sdk.CreateDeployment(
+	deployment, err := functionsSdk.CreateDeployment(
 		functionId,
 		file.NewInputFile("./files/gocode.tar.gz", "code.tar.gz"),
 		true,
-		sdk.WithCreateDeploymentEntrypoint("main.go"),
+		functionsSdk.WithCreateDeploymentEntrypoint("main.go"),
 	)
 
 	if err != nil {
@@ -144,7 +148,7 @@ func uploadDeployment(sdk *functions.Functions, functionId string) {
 	}
 	Info("Waiting for deployment to be ready...")
 	for {
-		response, err := sdk.GetDeployment(functionId, deployment.Id)
+		response, err := functionsSdk.GetDeployment(functionId, deployment.Id)
 		if err != nil {
 			panic(err)
 		}
@@ -163,10 +167,10 @@ func uploadDeployment(sdk *functions.Functions, functionId string) {
 
 }
 
-func executeSync(sdk *functions.Functions, functionId string) {
+func executeSync() {
 	Info("\nRunning Execute Function API (sync)")
 
-	execution, err := sdk.CreateExecution(
+	execution, err := functionsSdk.CreateExecution(
 		functionId,
 	)
 	if err != nil {
@@ -176,12 +180,12 @@ func executeSync(sdk *functions.Functions, functionId string) {
 	Success(execution.ResponseBody)
 }
 
-func executeAsync(sdk *functions.Functions, functionId string) {
+func executeAsync() {
 	Info("\nRunning Execute Function API (async)")
 
-	execution, err := sdk.CreateExecution(
+	execution, err := functionsSdk.CreateExecution(
 		functionId,
-		sdk.WithCreateExecutionAsync(true),
+		functionsSdk.WithCreateExecutionAsync(true),
 	)
 	if err != nil {
 		panic(err)
@@ -189,7 +193,7 @@ func executeAsync(sdk *functions.Functions, functionId string) {
 	Info("Waiting a little to ensure execution is finished ...")
 	time.Sleep(2 * time.Second)
 
-	executionResults, err := sdk.GetExecution(functionId, execution.Id)
+	executionResults, err := functionsSdk.GetExecution(functionId, execution.Id)
 
 	if err != nil {
 		panic(err)
@@ -197,10 +201,10 @@ func executeAsync(sdk *functions.Functions, functionId string) {
 	Success(fmt.Sprintf("%d", executionResults.ResponseStatusCode))
 }
 
-func deleteFunction(sdk *functions.Functions, functionId string) {
+func deleteFunction() {
 	Info("\nRunning Delete Function API")
 
-	_, err := sdk.Delete(functionId)
+	_, err := functionsSdk.Delete(functionId)
 	if err != nil {
 		panic(err)
 	}
@@ -208,14 +212,14 @@ func deleteFunction(sdk *functions.Functions, functionId string) {
 	Success("Function deleted")
 }
 
-func createUser(users *users.Users) string {
+func createUser() {
 	Info("\nRunning Create User API")
 
-	response, err := users.Create(
+	response, err := usersSdk.Create(
 		id.Unique(),
-		users.WithCreateEmail("test@example.com"),
-		users.WithCreatePassword("password"),
-		users.WithCreateName("Some User"),
+		usersSdk.WithCreateEmail("test@example.com"),
+		usersSdk.WithCreatePassword("password"),
+		usersSdk.WithCreateName("Some User"),
 	)
 
 	if err != nil {
@@ -223,13 +227,13 @@ func createUser(users *users.Users) string {
 	}
 	Success(fmt.Sprintf("User (%v)\"Some User\" created", response.Id))
 
-	return response.Id
+	userId = response.Id
 }
 
-func listUsers(users *users.Users) {
+func listUsers() {
 	Info("\nRunning List Users API")
 
-	response, err := users.List()
+	response, err := usersSdk.List()
 
 	if err != nil {
 		panic(err)
@@ -240,10 +244,10 @@ func listUsers(users *users.Users) {
 	}
 }
 
-func getUser(users *users.Users, userId string) {
+func getUser() {
 	Info("\nRunning Get User API")
 
-	response, err := users.Get(userId)
+	response, err := usersSdk.Get(userId)
 
 	if err != nil {
 		panic(err)
@@ -251,10 +255,10 @@ func getUser(users *users.Users, userId string) {
 	Success(fmt.Sprintf("(%v) %v - %v", response.Id, response.Name, response.Email))
 }
 
-func updateUserName(users *users.Users, userId string) {
+func updateUserName() {
 	Info("\nRunning Update User Name API")
 
-	response, err := users.UpdateName(userId, "Updated Name")
+	response, err := usersSdk.UpdateName(userId, "Updated Name")
 
 	if err != nil {
 		panic(err)
@@ -262,10 +266,10 @@ func updateUserName(users *users.Users, userId string) {
 	Success(fmt.Sprintf("(%v) %v - %v", response.Id, response.Name, response.Email))
 }
 
-func deleteUser(users *users.Users, userId string) {
+func deleteUser() {
 	Info("\nRunning Delete User API")
 
-	_, err := users.Delete(userId)
+	_, err := usersSdk.Delete(userId)
 
 	if err != nil {
 		panic(err)
@@ -274,13 +278,13 @@ func deleteUser(users *users.Users, userId string) {
 
 }
 
-func createBucket(storage *storage.Storage) string {
+func createBucket() {
 	Info("\nRunning Create Bucket API")
 
-	response, err := storage.CreateBucket(
+	response, err := storageSdk.CreateBucket(
 		id.Unique(),
 		"All Files",
-		storage.WithCreateBucketPermissions([]string{
+		storageSdk.WithCreateBucketPermissions([]string{
 			permission.Read(role.Any()),
 			permission.Create(role.Users("")),
 			permission.Update(role.Users("")),
@@ -292,13 +296,13 @@ func createBucket(storage *storage.Storage) string {
 	}
 	Success(fmt.Sprintf("Bucket (%v) \"All Files\" created", response.Id))
 
-	return response.Id
+	bucketId = response.Id
 }
 
-func listBuckets(storage *storage.Storage) {
+func listBuckets() {
 	Info("\nRunning List Bucket API")
 
-	response, err := storage.ListBuckets()
+	response, err := storageSdk.ListBuckets()
 
 	if err != nil {
 		panic(err)
@@ -310,10 +314,10 @@ func listBuckets(storage *storage.Storage) {
 	}
 }
 
-func getBucket(storage *storage.Storage, bucketId string) {
+func getBucket() {
 	Info("\nRunning Get Bucket API")
 
-	response, err := storage.GetBucket(bucketId)
+	response, err := storageSdk.GetBucket(bucketId)
 
 	if err != nil {
 		panic(err)
@@ -322,10 +326,10 @@ func getBucket(storage *storage.Storage, bucketId string) {
 	Success(fmt.Sprintf("(%v) %v", response.Id, response.Name))
 }
 
-func updateBucket(storage *storage.Storage, bucketId string) {
+func updateBucket() {
 	Info("\nRunning Update Bucket API")
 
-	response, err := storage.UpdateBucket(bucketId, "Updated Bucket")
+	response, err := storageSdk.UpdateBucket(bucketId, "Updated Bucket")
 
 	if err != nil {
 		panic(err)
@@ -334,14 +338,14 @@ func updateBucket(storage *storage.Storage, bucketId string) {
 	Success(fmt.Sprintf("(%v) %v", response.Id, response.Name))
 }
 
-func uploadFile(storage *storage.Storage, bucketId string) string {
+func uploadFile() {
 	Info("\nRunning Upload File API")
 
-	response, err := storage.CreateFile(
+	response, err := storageSdk.CreateFile(
 		bucketId,
 		id.Unique(),
 		file.NewInputFile("./files/nature.jpg", "nature.jpg"),
-		storage.WithCreateFilePermissions([]string{
+		storageSdk.WithCreateFilePermissions([]string{
 			permission.Read(role.Any()),
 			permission.Update(role.Users("")),
 			permission.Delete(role.Users("")),
@@ -354,28 +358,28 @@ func uploadFile(storage *storage.Storage, bucketId string) string {
 
 	Success(fmt.Sprintf("(%v) %v", response.Id, response.Name))
 
-	return response.Id
+	fileId = response.Id
 }
 
-func listFiles(storage *storage.Storage, bucketId string) {
+func listFiles() {
 	Info("\nRunning List Files API")
 
-	response, err := storage.ListFiles(bucketId)
+	response, err := storageSdk.ListFiles(bucketId)
 
 	if err != nil {
 		panic(err)
 	}
 
 	Success("Files list:")
-	for _, file := range response.Files {
-		Success(fmt.Sprintf("(%v) %v", file.Id, file.Name))
+	for _, localFile := range response.Files {
+		Success(fmt.Sprintf("(%v) %v", localFile.Id, localFile.Name))
 	}
 }
 
-func getFile(storage *storage.Storage, bucketId, fileId string) {
+func getFile() {
 	Info("\nRunning Get File API")
 
-	response, err := storage.GetFile(bucketId, fileId)
+	response, err := storageSdk.GetFile(bucketId, fileId)
 
 	if err != nil {
 		panic(err)
@@ -384,13 +388,13 @@ func getFile(storage *storage.Storage, bucketId, fileId string) {
 	Success(fmt.Sprintf("(%v) %v", response.Id, response.Name))
 }
 
-func updateFile(storage *storage.Storage, bucketId, fileId string) {
+func updateFile() {
 	Info("\nRunning Update File API")
 
-	response, err := storage.UpdateFile(
+	response, err := storageSdk.UpdateFile(
 		bucketId,
 		fileId,
-		storage.WithUpdateFilePermissions([]string{
+		storageSdk.WithUpdateFilePermissions([]string{
 			permission.Read(role.Any()),
 			permission.Update(role.Any()),
 			permission.Delete(role.Any()),
@@ -404,10 +408,10 @@ func updateFile(storage *storage.Storage, bucketId, fileId string) {
 	Success(fmt.Sprintf("(%v) %v", response.Id, response.Name))
 }
 
-func deleteFile(storage *storage.Storage, bucketId, fileId string) {
+func deleteFile() {
 	Info("\nRunning Delete File API")
 
-	_, err := storage.DeleteFile(bucketId, fileId)
+	_, err := storageSdk.DeleteFile(bucketId, fileId)
 	if err != nil {
 		panic(err)
 	}
@@ -415,10 +419,10 @@ func deleteFile(storage *storage.Storage, bucketId, fileId string) {
 	Success("File deleted")
 }
 
-func deleteBucket(storage *storage.Storage, bucketId string) {
+func deleteBucket() {
 	Info("\nRunning Delete Bucket API")
 
-	_, err := storage.DeleteBucket(bucketId)
+	_, err := storageSdk.DeleteBucket(bucketId)
 	if err != nil {
 		panic(err)
 	}
@@ -426,20 +430,20 @@ func deleteBucket(storage *storage.Storage, bucketId string) {
 	Success("Bucket deleted")
 }
 
-func createDatabase(dbs *databases.Databases) string {
+func createDatabase() {
 	Info("Running Create Database API")
-	response, err := dbs.Create(id.Unique(), "Default")
+	response, err := databasesSdk.Create(id.Unique(), "Default")
 	if err != nil {
 		panic(err)
 	}
 
 	Success("Created database")
-	return response.Id
+	dbId = response.Id
 }
 
-func listDatabases(dbs *databases.Databases) {
+func listDatabases() {
 	Info("\nRunning List Databases API")
-	response, err := dbs.List()
+	response, err := databasesSdk.List()
 	if err != nil {
 		panic(err)
 	}
@@ -450,10 +454,10 @@ func listDatabases(dbs *databases.Databases) {
 	}
 }
 
-func getDatabase(dbs *databases.Databases, id string) {
+func getDatabase() {
 	Info("\nRunning Get Database API")
 
-	response, err := dbs.Get(id)
+	response, err := databasesSdk.Get(dbId)
 	if err != nil {
 		panic(err)
 	}
@@ -465,10 +469,10 @@ func getDatabase(dbs *databases.Databases, id string) {
 	fmt.Printf("UpdatedAt: %v\n", green.Render(response.UpdatedAt))
 }
 
-func updateDatabase(dbs *databases.Databases, id string) {
+func updateDatabase() {
 	Info("\nRunning Update Database API")
 
-	response, err := dbs.Update(id, "Updated Database")
+	response, err := databasesSdk.Update(dbId, "Updated Database")
 	if err != nil {
 		panic(err)
 	}
@@ -481,10 +485,10 @@ func updateDatabase(dbs *databases.Databases, id string) {
 
 }
 
-func deleteDatabase(dbs *databases.Databases, id string) {
+func deleteDatabase() {
 	Info("\nRunning Delete Database API")
 
-	_, err := dbs.Delete(id)
+	_, err := databasesSdk.Delete(dbId)
 	if err != nil {
 		panic(err)
 	}
@@ -492,13 +496,13 @@ func deleteDatabase(dbs *databases.Databases, id string) {
 	Success("Database deleted")
 }
 
-func createCollection(dbs *databases.Databases, dbId string) string {
+func createCollection() {
 	Info("\nRunning Create Collection API")
 
-	response, err := dbs.CreateCollection(
+	response, err := databasesSdk.CreateCollection(
 		dbId, id.Unique(),
 		"Collection",
-		dbs.WithCreateCollectionPermissions([]string{
+		databasesSdk.WithCreateCollectionPermissions([]string{
 			permission.Read(role.Any()),
 			permission.Create(role.Users("")),
 			permission.Update(role.Users("")),
@@ -510,16 +514,16 @@ func createCollection(dbs *databases.Databases, dbId string) string {
 	}
 	Success("Collection created")
 
-	collectionId := response.Id
+	collectionId = response.Id
 
-	_, err = dbs.CreateStringAttribute(
+	_, err = databasesSdk.CreateStringAttribute(
 		dbId,
 		collectionId,
 		"name",
 		255,
 		false,
-		dbs.WithCreateStringAttributeDefault("Empty Name"),
-		dbs.WithCreateStringAttributeArray(false),
+		databasesSdk.WithCreateStringAttributeDefault("Empty Name"),
+		databasesSdk.WithCreateStringAttributeArray(false),
 	)
 
 	if err != nil {
@@ -527,15 +531,15 @@ func createCollection(dbs *databases.Databases, dbId string) string {
 	}
 	Success("Attribute `name` created")
 
-	_, err = dbs.CreateIntegerAttribute(
+	_, err = databasesSdk.CreateIntegerAttribute(
 		dbId,
 		collectionId,
 		"release_year",
 		false,
-		dbs.WithCreateIntegerAttributeMin(0),
-		dbs.WithCreateIntegerAttributeMax(5000),
-		dbs.WithCreateIntegerAttributeDefault(1970),
-		dbs.WithCreateIntegerAttributeArray(false),
+		databasesSdk.WithCreateIntegerAttributeMin(0),
+		databasesSdk.WithCreateIntegerAttributeMax(5000),
+		databasesSdk.WithCreateIntegerAttributeDefault(1970),
+		databasesSdk.WithCreateIntegerAttributeArray(false),
 	)
 
 	if err != nil {
@@ -547,13 +551,13 @@ func createCollection(dbs *databases.Databases, dbId string) string {
 	Info("Waiting a little to ensure attributes are created ...")
 	time.Sleep(time.Second * 2)
 
-	_, err = dbs.CreateIndex(
+	_, err = databasesSdk.CreateIndex(
 		dbId,
 		collectionId,
 		"key_release_year_asc",
 		"key",
 		[]string{"release_year"},
-		dbs.WithCreateIndexOrders([]string{"ASC"}),
+		databasesSdk.WithCreateIndexOrders([]string{"ASC"}),
 	)
 
 	if err != nil {
@@ -564,14 +568,12 @@ func createCollection(dbs *databases.Databases, dbId string) string {
 	time.Sleep(time.Second * 2)
 	Success("Index `key_release_year_asc` created")
 
-	return collectionId
-
 }
 
-func deleteCollection(dbs *databases.Databases, dbId string, collectionId string) {
+func deleteCollection() {
 	Info("\nRunning Delete Collection API")
 
-	_, err := dbs.DeleteCollection(dbId, collectionId)
+	_, err := databasesSdk.DeleteCollection(dbId, collectionId)
 	if err != nil {
 		panic(err)
 	}
@@ -579,9 +581,9 @@ func deleteCollection(dbs *databases.Databases, dbId string, collectionId string
 	Success("Collection deleted")
 }
 
-func listCollections(dbs *databases.Databases, dbId string) {
+func listCollections() {
 	Info("\nRunning List Collections API")
-	response, err := dbs.ListCollections(dbId)
+	response, err := databasesSdk.ListCollections(dbId)
 	if err != nil {
 		panic(err)
 	}
@@ -591,10 +593,10 @@ func listCollections(dbs *databases.Databases, dbId string) {
 		Success(fmt.Sprintf("(%v) %v", collection.Id, collection.Name))
 	}
 }
-func getCollection(dbs *databases.Databases, dbId string, collectionId string) {
+func getCollection() {
 	Info("\nRunning Get Collection API")
 
-	response, err := dbs.GetCollection(dbId, collectionId)
+	response, err := databasesSdk.GetCollection(dbId, collectionId)
 	if err != nil {
 		panic(err)
 	}
@@ -606,10 +608,10 @@ func getCollection(dbs *databases.Databases, dbId string, collectionId string) {
 	fmt.Printf("UpdatedAt: %v\n", green.Render(response.UpdatedAt))
 }
 
-func updateCollection(dbs *databases.Databases, dbId string, collectionId string) {
+func updateCollection() {
 	Info("\nRunning Update Collection API")
 
-	response, err := dbs.UpdateCollection(dbId, collectionId, "Updated Collection")
+	response, err := databasesSdk.UpdateCollection(dbId, collectionId, "Updated Collection")
 	if err != nil {
 		panic(err)
 	}
@@ -621,9 +623,9 @@ func updateCollection(dbs *databases.Databases, dbId string, collectionId string
 	fmt.Printf("UpdatedAt: %v\n", green.Render(response.UpdatedAt))
 
 }
-func listAttributes(dbs *databases.Databases, dbId string, collectionId string) {
+func listAttributes() {
 	Info("\nRunning List Attributes API")
-	response, err := dbs.ListAttributes(dbId, collectionId)
+	response, err := databasesSdk.ListAttributes(dbId, collectionId)
 	if err != nil {
 		panic(err)
 	}
@@ -634,9 +636,9 @@ func listAttributes(dbs *databases.Databases, dbId string, collectionId string) 
 	}
 }
 
-func createDocument(dbs *databases.Databases, dbId string, collectionId string) string {
+func createDocument() {
 	Info("\nRunning Add Document API")
-	response, err := dbs.CreateDocument(
+	response, err := databasesSdk.CreateDocument(
 		dbId,
 		collectionId,
 		id.Unique(),
@@ -644,7 +646,7 @@ func createDocument(dbs *databases.Databases, dbId string, collectionId string) 
 			"name":         "Spider Man",
 			"release_year": 1920,
 		},
-		dbs.WithCreateDocumentPermissions([]string{
+		databasesSdk.WithCreateDocumentPermissions([]string{
 			permission.Read(role.Any()),
 			permission.Update(role.Users("")),
 			permission.Delete(role.Users("")),
@@ -655,11 +657,11 @@ func createDocument(dbs *databases.Databases, dbId string, collectionId string) 
 	}
 
 	Success("Document created")
-	return response.Id
+	documentId = response.Id
 }
-func listDocuments(dbs *databases.Databases, dbId string, collectionId string) {
+func listDocuments() {
 	Info("\nRunning List Documents API")
-	response, err := dbs.ListDocuments(dbId, collectionId)
+	response, err := databasesSdk.ListDocuments(dbId, collectionId)
 
 	if err != nil {
 		panic(err)
@@ -679,9 +681,9 @@ func listDocuments(dbs *databases.Databases, dbId string, collectionId string) {
 	}
 }
 
-func getDocument(dbs *databases.Databases, dbId string, collectionId string, documentId string) {
+func getDocument() {
 	Info("\nRunning Get Document API")
-	response, err := dbs.GetDocument(dbId, collectionId, documentId)
+	response, err := databasesSdk.GetDocument(dbId, collectionId, documentId)
 	if err != nil {
 		panic(err)
 	}
@@ -696,14 +698,14 @@ func getDocument(dbs *databases.Databases, dbId string, collectionId string, doc
 	Success(fmt.Sprintf("(%v) %v - %v", document.Id, document.Name, document.ReleaseYear))
 
 }
-func updateDocument(dbs *databases.Databases, dbId string, collectionId string, documentId string) {
+func updateDocument() {
 	Info("\nRunning Update Document API")
 
-	response, err := dbs.UpdateDocument(
+	response, err := databasesSdk.UpdateDocument(
 		dbId,
 		collectionId,
 		documentId,
-		dbs.WithUpdateDocumentData(map[string]any{"release_year": 2005}),
+		databasesSdk.WithUpdateDocumentData(map[string]any{"release_year": 2005}),
 	)
 	if err != nil {
 		panic(err)
@@ -715,10 +717,10 @@ func updateDocument(dbs *databases.Databases, dbId string, collectionId string, 
 	Success(fmt.Sprintf("(%v) release_year=%v", document.Id, document.ReleaseYear))
 }
 
-func deleteDocument(dbs *databases.Databases, dbId string, collectionId string, documentId string) {
+func deleteDocument() {
 	Info("\nRunning Delete Document API")
 
-	_, err := dbs.DeleteDocument(dbId, collectionId, documentId)
+	_, err := databasesSdk.DeleteDocument(dbId, collectionId, documentId)
 	if err != nil {
 		panic(err)
 	}
