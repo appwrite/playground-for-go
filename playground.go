@@ -22,9 +22,9 @@ type ExampleDocuments struct {
 }
 
 var client = appwrite.NewClient(
-	appwrite.WithEndpoint("https://v16.appwrite.org/v1"), // Replace with your endpoint
-	appwrite.WithProject("6697f76e00251b11c823"),         // Replace with your project ID
-	appwrite.WithKey("standard_c321c05842acd04ec9b826eaa6fa5a58adb1c116ceff3915210a4d4dbfc16f0a346da8b5160a364a20f0770d725e70df45782693e01ff0fae2d7078405d0e4c755b4353175d515d6668bf1899df771a88ee80e43805e3a9916f6160534b9c8c21ed5cbe806ee947eb4ef2345bb700779f8b7daa440b68659b255e1e59c2bcaaf"), // Replace with your API Key
+	appwrite.WithEndpoint("YOUR_ENDPOINT"),  // Replace with your endpoint
+	appwrite.WithProject("YOUR_PROJECT_ID"), // Replace with your project ID
+	appwrite.WithKey("YOUR_API_KEY"),        // Replace with your API Key
 )
 
 var databasesSdk = appwrite.NewDatabases(client)
