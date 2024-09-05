@@ -1,15 +1,16 @@
 # playground-for-go
-
-Simple examples that help you get started with Appwrite + Go (=❤️)
-
-**Work in progress**
+Appwrite playground is a simple way to explore the Appwrite API & Go. Use the source code of this page to learn how to use the different Appwrite Go features.
+![playground.gif](playground.gif)
 
 ## Get Started
+The `playground.go` file in this repository contains the playground examples and source code.
+
+You can learn how to integrate your Appwrite Go in your project and see how different features of the SDK can be used.
 
 This playground doesn't include any Go best practices but rather it's intended to show some of the most simple examples and use cases of using the Appwrite API in your Go application.
 
 ## Requirements
-* A system with Go or Docker installed.
+* A system with Go 1.22 installed.
 * An Appwrite instance.
 * An Appwrite project created in the console.
 * An Appwrite API key created in the console.
@@ -21,11 +22,8 @@ This playground doesn't include any Go best practices but rather it's intended t
 3. Open the `playground.go` file found in the root of the cloned repository.
 4. Copy Project ID, endpoint and API key from Appwrite console into `playground.go`
 5. Run the playground:
-    - Go:
-        - Install dependencies `go get`
-        - Execute the command `go run .`
-    - Docker:
-        - Execute the command `docker compose up`
+   - Install dependencies `go mod tidy`
+   - Execute the command `go run .`
 6. You will see the JSON response in the console.
 
 ## API's Covered

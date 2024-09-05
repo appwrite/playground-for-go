@@ -1,380 +1,729 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	"strconv"
-	"time"
-
-	"github.com/appwrite/sdk-for-go/account"
 	"github.com/appwrite/sdk-for-go/appwrite"
-	"github.com/appwrite/sdk-for-go/client"
-	"github.com/appwrite/sdk-for-go/databases"
-	"github.com/appwrite/sdk-for-go/functions"
+	"github.com/appwrite/sdk-for-go/file"
 	"github.com/appwrite/sdk-for-go/id"
+	"github.com/appwrite/sdk-for-go/models"
 	"github.com/appwrite/sdk-for-go/permission"
-	"github.com/appwrite/sdk-for-go/storage"
-	"github.com/appwrite/sdk-for-go/users"
+	"github.com/appwrite/sdk-for-go/role"
+	"time"
 )
 
-var appwriteProject = "<PROJECT_ID>"
-var appwriteApiKey = "<API_KEY>"
+type ExampleDocument struct {
+	models.Document
+	Name        string `json:"name"`
+	ReleaseYear int    `json:"release_year"`
+}
+type ExampleDocuments struct {
+	models.DocumentList
+	Documents []ExampleDocument `json:"documents"`
+}
 
-var (
-	appwriteClient   client.Client
-	appwriteDatabase *databases.Databases
-	appwriteFunction *functions.Functions
-	appwriteStorage  *storage.Storage
-	appwriteAccount  *account.Account
-	appwriteUsers    *users.Users
-	databaseId       string
-	collectionId     string
-	documentId       string
-	userId           string
-	bucketId         string
-	fileId           string
-	functionId       string
+var client = appwrite.NewClient(
+	appwrite.WithEndpoint("YOUR_ENDPOINT"),  // Replace with your endpoint
+	appwrite.WithProject("YOUR_PROJECT_ID"), // Replace with your project ID
+	appwrite.WithKey("YOUR_API_KEY"),        // Replace with your API Key
 )
+
+var databasesSdk = appwrite.NewDatabases(client)
+var storageSdk = appwrite.NewStorage(client)
+var usersSdk = appwrite.NewUsers(client)
+var functionsSdk = appwrite.NewFunctions(client)
+
+var dbId string
+var collectionId string
+var documentId string
+var bucketId string
+var fileId string
+var userId string
+var functionId string
 
 func main() {
-	appwriteClient = appwrite.NewClient(
-		appwrite.WithProject(appwriteProject),
-		appwrite.WithKey(appwriteApiKey),
-		// appwrite.WithJWT("JWT") // Use this to authenticate with JWT instead of API_KEY
-	)
 
-	appwriteDatabase = appwrite.NewDatabases(appwriteClient)
-	appwriteFunction = appwrite.NewFunctions(appwriteClient)
-	appwriteUsers = appwrite.NewUsers(appwriteClient)
-	appwriteStorage = appwrite.NewStorage(appwriteClient)
-	appwriteAccount = appwrite.NewAccount(appwriteClient)
+	createDatabase()
+	listDatabases()
+	getDatabase()
+	updateDatabase()
 
-	// GetAccount() // Use this only with JWT
-	CreateUser()
-	ListUsers()
-	DeleteUser()
+	createCollection()
+	listCollections()
+	getCollection()
+	updateCollection()
+	listAttributes()
 
-	CreateDatabase()
-	CreateCollection()
-	ListCollection()
-	CreateDocument()
-	ListDocuments()
-	DeleteDocument()
-	DeleteCollection()
-	DeleteDatabase()
+	createDocument()
+	getDocument()
+	listDocuments()
+	updateDocument()
 
-	CreateBucket()
-	ListBuckets()
-	// UploadFile() TODO: Fix how we send content range etc in SDK Go
-	ListFiles()
-	DeleteFile()
-	DeleteBucket()
+	deleteDocument()
+	deleteCollection()
+	deleteDatabase()
 
-	CreateFunction()
-	ListFunctions()
-	DeleteFunction()
+	createBucket()
+	listBuckets()
+	getBucket()
+	updateBucket()
 
-	fmt.Println("Successfully ran playground!")
+	uploadFile()
+	listFiles()
+	getFile()
+	updateFile()
+	deleteFile()
+	deleteBucket()
+
+	createUser()
+	listUsers()
+	getUser()
+	updateUserName()
+	deleteUser()
+
+	createFunction()
+	listFunctions()
+	getFunction()
+	uploadDeployment()
+	executeSync()
+	executeAsync()
+	deleteFunction()
 }
 
-func print(data interface{}) {
-	b, _ := json.MarshalIndent(data, "", "  ")
-	fmt.Println(string(b))
-}
+func createFunction() {
+	Info("\nRunning Create Function API")
 
-func CreateUser() {
-	fmt.Println("Running Create user API")
-
-	var name = strconv.Itoa(int(time.Now().Unix()))
-
-	user, _ := appwriteUsers.Create(
+	response, err := functionsSdk.Create(
 		id.Unique(),
-		appwriteUsers.WithCreateEmail(name+"@example.com"),
-		appwriteUsers.WithCreatePassword(name+"1234"),
-		appwriteUsers.WithCreateName(name),
+		"Go Hello World",
+		"go-1.22",
+		functionsSdk.WithCreateExecute([]string{role.Any()}),
 	)
 
-	userId = user.Id
+	if err != nil {
+		panic(err)
+	}
+	Success(fmt.Sprintf("Function (%v)\"Go Hello World\" created", response.Id))
 
-	print(user)
+	functionId = response.Id
 }
 
-func ListUsers() {
-	fmt.Println("Running List User API")
+func getFunction() {
+	Info("\nRunning Get Function API")
 
-	users, _ := appwriteUsers.List()
+	response, err := functionsSdk.Get(functionId)
 
-	print(users)
+	if err != nil {
+		panic(err)
+	}
+
+	Success(fmt.Sprintf("(%v) %v - %v", response.Id, response.Name, response.Runtime))
 }
 
-func GetAccount() {
-	fmt.Println("Running List Users API")
+func listFunctions() {
+	Info("\nRunning List Functions API")
 
-	response, _ := appwriteAccount.Get()
+	response, err := functionsSdk.List()
 
-	print(response)
+	if err != nil {
+		panic(err)
+	}
+
+	Success("Functions list:")
+	for _, function := range response.Functions {
+		Success(fmt.Sprintf("(%v) %v - %v", function.Id, function.Name, function.Runtime))
+	}
 }
 
-func DeleteUser() {
-	fmt.Println("Running Delete User API")
+func uploadDeployment() {
+	Info("\nRunning Upload Deployment  API")
+	deployment, err := functionsSdk.CreateDeployment(
+		functionId,
+		file.NewInputFile("./files/gocode.tar.gz", "code.tar.gz"),
+		true,
+		functionsSdk.WithCreateDeploymentEntrypoint("main.go"),
+	)
 
-	response, _ := appwriteUsers.Delete(userId)
+	if err != nil {
+		panic(err)
+	}
+	Info("Waiting for deployment to be ready...")
+	for {
+		response, err := functionsSdk.GetDeployment(functionId, deployment.Id)
+		if err != nil {
+			panic(err)
+		}
+		if response.Status == "ready" {
+			break
+		}
 
-	print(response)
+		if response.Status == "failed" {
+			panic("Function build failed")
+		}
+
+		time.Sleep(5 * time.Second)
+	}
+
+	Success("Deployment uploaded")
+
 }
 
-func CreateDatabase() {
-	fmt.Println("Running Create Database API")
+func executeSync() {
+	Info("\nRunning Execute Function API (sync)")
 
-	database, _ := appwriteDatabase.Create(id.Unique(), "Movies")
+	execution, err := functionsSdk.CreateExecution(
+		functionId,
+	)
+	if err != nil {
+		panic(err)
+	}
 
-	databaseId = database.Id
-
-	print(database)
+	Success(execution.ResponseBody)
 }
 
-func DeleteDatabase() {
-	fmt.Println("Running Delete Database API")
+func executeAsync() {
+	Info("\nRunning Execute Function API (async)")
 
-	response, _ := appwriteDatabase.Delete(databaseId)
+	execution, err := functionsSdk.CreateExecution(
+		functionId,
+		functionsSdk.WithCreateExecutionAsync(true),
+	)
+	if err != nil {
+		panic(err)
+	}
+	Info("Waiting a little to ensure execution is finished ...")
+	time.Sleep(2 * time.Second)
 
-	print(response)
+	executionResults, err := functionsSdk.GetExecution(functionId, execution.Id)
+
+	if err != nil {
+		panic(err)
+	}
+	Success(fmt.Sprintf("%d", executionResults.ResponseStatusCode))
 }
 
-func CreateCollection() {
-	fmt.Println("Running Create Collection API")
+func deleteFunction() {
+	Info("\nRunning Delete Function API")
 
-	appwriteCollection, _ := appwriteDatabase.CreateCollection(
-		databaseId,
+	_, err := functionsSdk.Delete(functionId)
+	if err != nil {
+		panic(err)
+	}
+
+	Success("Function deleted")
+}
+
+func createUser() {
+	Info("\nRunning Create User API")
+
+	response, err := usersSdk.Create(
 		id.Unique(),
-		"Movies",
-		appwriteDatabase.WithCreateCollectionPermissions([]string{permission.Create("any")}),
-		appwriteDatabase.WithCreateCollectionDocumentSecurity(true),
+		usersSdk.WithCreateEmail("test@example.com"),
+		usersSdk.WithCreatePassword("password"),
+		usersSdk.WithCreateName("Some User"),
 	)
 
-	collectionId = appwriteCollection.Id
-	print(appwriteCollection)
+	if err != nil {
+		panic(err)
+	}
+	Success(fmt.Sprintf("User (%v)\"Some User\" created", response.Id))
 
-	nameAttributeResponse, _ := appwriteDatabase.CreateStringAttribute(
-		databaseId,
+	userId = response.Id
+}
+
+func listUsers() {
+	Info("\nRunning List Users API")
+
+	response, err := usersSdk.List()
+
+	if err != nil {
+		panic(err)
+	}
+	Success("Users list:")
+	for _, user := range response.Users {
+		Success(fmt.Sprintf("(%v) %v - %v", user.Id, user.Name, user.Email))
+	}
+}
+
+func getUser() {
+	Info("\nRunning Get User API")
+
+	response, err := usersSdk.Get(userId)
+
+	if err != nil {
+		panic(err)
+	}
+	Success(fmt.Sprintf("(%v) %v - %v", response.Id, response.Name, response.Email))
+}
+
+func updateUserName() {
+	Info("\nRunning Update User Name API")
+
+	response, err := usersSdk.UpdateName(userId, "Updated Name")
+
+	if err != nil {
+		panic(err)
+	}
+	Success(fmt.Sprintf("(%v) %v - %v", response.Id, response.Name, response.Email))
+}
+
+func deleteUser() {
+	Info("\nRunning Delete User API")
+
+	_, err := usersSdk.Delete(userId)
+
+	if err != nil {
+		panic(err)
+	}
+	Success("User deleted")
+
+}
+
+func createBucket() {
+	Info("\nRunning Create Bucket API")
+
+	response, err := storageSdk.CreateBucket(
+		id.Unique(),
+		"All Files",
+		storageSdk.WithCreateBucketPermissions([]string{
+			permission.Read(role.Any()),
+			permission.Create(role.Users("")),
+			permission.Update(role.Users("")),
+			permission.Delete(role.Users("")),
+		}))
+
+	if err != nil {
+		panic(err)
+	}
+	Success(fmt.Sprintf("Bucket (%v) \"All Files\" created", response.Id))
+
+	bucketId = response.Id
+}
+
+func listBuckets() {
+	Info("\nRunning List Bucket API")
+
+	response, err := storageSdk.ListBuckets()
+
+	if err != nil {
+		panic(err)
+	}
+
+	Success("Buckets list:")
+	for _, bucket := range response.Buckets {
+		Success(fmt.Sprintf("(%v) %v", bucket.Id, bucket.Name))
+	}
+}
+
+func getBucket() {
+	Info("\nRunning Get Bucket API")
+
+	response, err := storageSdk.GetBucket(bucketId)
+
+	if err != nil {
+		panic(err)
+	}
+
+	Success(fmt.Sprintf("(%v) %v", response.Id, response.Name))
+}
+
+func updateBucket() {
+	Info("\nRunning Update Bucket API")
+
+	response, err := storageSdk.UpdateBucket(bucketId, "Updated Bucket")
+
+	if err != nil {
+		panic(err)
+	}
+
+	Success(fmt.Sprintf("(%v) %v", response.Id, response.Name))
+}
+
+func uploadFile() {
+	Info("\nRunning Upload File API")
+
+	response, err := storageSdk.CreateFile(
+		bucketId,
+		id.Unique(),
+		file.NewInputFile("./files/nature.jpg", "nature.jpg"),
+		storageSdk.WithCreateFilePermissions([]string{
+			permission.Read(role.Any()),
+			permission.Update(role.Users("")),
+			permission.Delete(role.Users("")),
+		}),
+	)
+
+	if err != nil {
+		panic(err)
+	}
+
+	Success(fmt.Sprintf("(%v) %v", response.Id, response.Name))
+
+	fileId = response.Id
+}
+
+func listFiles() {
+	Info("\nRunning List Files API")
+
+	response, err := storageSdk.ListFiles(bucketId)
+
+	if err != nil {
+		panic(err)
+	}
+
+	Success("Files list:")
+	for _, localFile := range response.Files {
+		Success(fmt.Sprintf("(%v) %v", localFile.Id, localFile.Name))
+	}
+}
+
+func getFile() {
+	Info("\nRunning Get File API")
+
+	response, err := storageSdk.GetFile(bucketId, fileId)
+
+	if err != nil {
+		panic(err)
+	}
+
+	Success(fmt.Sprintf("(%v) %v", response.Id, response.Name))
+}
+
+func updateFile() {
+	Info("\nRunning Update File API")
+
+	response, err := storageSdk.UpdateFile(
+		bucketId,
+		fileId,
+		storageSdk.WithUpdateFilePermissions([]string{
+			permission.Read(role.Any()),
+			permission.Update(role.Any()),
+			permission.Delete(role.Any()),
+		}),
+	)
+
+	if err != nil {
+		panic(err)
+	}
+
+	Success(fmt.Sprintf("(%v) %v", response.Id, response.Name))
+}
+
+func deleteFile() {
+	Info("\nRunning Delete File API")
+
+	_, err := storageSdk.DeleteFile(bucketId, fileId)
+	if err != nil {
+		panic(err)
+	}
+
+	Success("File deleted")
+}
+
+func deleteBucket() {
+	Info("\nRunning Delete Bucket API")
+
+	_, err := storageSdk.DeleteBucket(bucketId)
+	if err != nil {
+		panic(err)
+	}
+
+	Success("Bucket deleted")
+}
+
+func createDatabase() {
+	Info("Running Create Database API")
+	response, err := databasesSdk.Create(id.Unique(), "Default")
+	if err != nil {
+		panic(err)
+	}
+
+	Success("Created database")
+	dbId = response.Id
+}
+
+func listDatabases() {
+	Info("\nRunning List Databases API")
+	response, err := databasesSdk.List()
+	if err != nil {
+		panic(err)
+	}
+
+	Success("Databases list:")
+	for _, database := range response.Databases {
+		Success(fmt.Sprintf("(%v) %v", database.Id, database.Name))
+	}
+}
+
+func getDatabase() {
+	Info("\nRunning Get Database API")
+
+	response, err := databasesSdk.Get(dbId)
+	if err != nil {
+		panic(err)
+	}
+
+	Success("Database details")
+	fmt.Printf("Id: %v\n", green.Render(response.Id))
+	fmt.Printf("Name: %v\n", green.Render(response.Name))
+	fmt.Printf("CreatedAt: %v\n", green.Render(response.CreatedAt))
+	fmt.Printf("UpdatedAt: %v\n", green.Render(response.UpdatedAt))
+}
+
+func updateDatabase() {
+	Info("\nRunning Update Database API")
+
+	response, err := databasesSdk.Update(dbId, "Updated Database")
+	if err != nil {
+		panic(err)
+	}
+
+	Success("Database details")
+	fmt.Printf("Id: %v\n", green.Render(response.Id))
+	fmt.Printf("Name: %v\n", green.Render(response.Name))
+	fmt.Printf("CreatedAt: %v\n", green.Render(response.CreatedAt))
+	fmt.Printf("UpdatedAt: %v\n", green.Render(response.UpdatedAt))
+
+}
+
+func deleteDatabase() {
+	Info("\nRunning Delete Database API")
+
+	_, err := databasesSdk.Delete(dbId)
+	if err != nil {
+		panic(err)
+	}
+
+	Success("Database deleted")
+}
+
+func createCollection() {
+	Info("\nRunning Create Collection API")
+
+	response, err := databasesSdk.CreateCollection(
+		dbId, id.Unique(),
+		"Collection",
+		databasesSdk.WithCreateCollectionPermissions([]string{
+			permission.Read(role.Any()),
+			permission.Create(role.Users("")),
+			permission.Update(role.Users("")),
+			permission.Delete(role.Users("")),
+		}))
+
+	if err != nil {
+		panic(err)
+	}
+	Success("Collection created")
+
+	collectionId = response.Id
+
+	_, err = databasesSdk.CreateStringAttribute(
+		dbId,
 		collectionId,
 		"name",
 		255,
-		true,
+		false,
+		databasesSdk.WithCreateStringAttributeDefault("Empty Name"),
+		databasesSdk.WithCreateStringAttributeArray(false),
 	)
 
-	print(nameAttributeResponse)
+	if err != nil {
+		panic(err)
+	}
+	Success("Attribute `name` created")
 
-	yearAttributeResponse, _ := appwriteDatabase.CreateIntegerAttribute(
-		databaseId,
+	_, err = databasesSdk.CreateIntegerAttribute(
+		dbId,
 		collectionId,
 		"release_year",
-		true,
-		appwriteDatabase.WithCreateIntegerAttributeMin(0),
-		appwriteDatabase.WithCreateIntegerAttributeMax(9999),
-	)
-
-	print(yearAttributeResponse)
-
-	ratingAttributeResponse, _ := appwriteDatabase.CreateFloatAttribute(
-		databaseId,
-		collectionId,
-		"rating",
-		true,
-		appwriteDatabase.WithCreateFloatAttributeMin(0),
-		appwriteDatabase.WithCreateFloatAttributeMax(99.99),
-	)
-
-	print(ratingAttributeResponse)
-
-	kidsAttributeResponse, _ := appwriteDatabase.CreateBooleanAttribute(
-		databaseId,
-		collectionId,
-		"kids",
-		true,
-	)
-
-	print(kidsAttributeResponse)
-
-	emailAttributeResponse, _ := appwriteDatabase.CreateEmailAttribute(
-		databaseId,
-		collectionId,
-		"email",
 		false,
-		appwriteDatabase.WithCreateEmailAttributeDefault("example@email.com"),
+		databasesSdk.WithCreateIntegerAttributeMin(0),
+		databasesSdk.WithCreateIntegerAttributeMax(5000),
+		databasesSdk.WithCreateIntegerAttributeDefault(1970),
+		databasesSdk.WithCreateIntegerAttributeArray(false),
 	)
 
-	print(emailAttributeResponse)
+	if err != nil {
+		panic(err)
+	}
 
-	// Wait for attributes to be created
-	time.Sleep(2 * time.Second)
+	Success("Attribute `release_year` created")
 
-	appwriteDatabase.CreateIndex(
-		databaseId,
+	Info("Waiting a little to ensure attributes are created ...")
+	time.Sleep(time.Second * 2)
+
+	_, err = databasesSdk.CreateIndex(
+		dbId,
 		collectionId,
-		"name_email_idx",
-		"fulltext",
-		[]string{"email"},
-	)
-}
-
-func ListCollection() {
-	fmt.Println("Running List Collection API")
-
-	var collections, _ = appwriteDatabase.ListCollections(
-		databaseId,
+		"key_release_year_asc",
+		"key",
+		[]string{"release_year"},
+		databasesSdk.WithCreateIndexOrders([]string{"ASC"}),
 	)
 
-	print(collections)
+	if err != nil {
+		panic(err)
+	}
+
+	Info("Waiting a little to ensure index is created  ...")
+	time.Sleep(time.Second * 2)
+	Success("Index `key_release_year_asc` created")
+
 }
 
-func DeleteCollection() {
-	fmt.Println("Running Delete Collection API")
+func deleteCollection() {
+	Info("\nRunning Delete Collection API")
 
-	response, _ := appwriteDatabase.DeleteCollection(
-		databaseId,
-		collectionId,
-	)
+	_, err := databasesSdk.DeleteCollection(dbId, collectionId)
+	if err != nil {
+		panic(err)
+	}
 
-	print(response)
+	Success("Collection deleted")
 }
 
-func CreateDocument() {
-	fmt.Println("Running Create Document API")
+func listCollections() {
+	Info("\nRunning List Collections API")
+	response, err := databasesSdk.ListCollections(dbId)
+	if err != nil {
+		panic(err)
+	}
 
-	document, _ := appwriteDatabase.CreateDocument(
-		databaseId,
+	Success("Collections list:")
+	for _, collection := range response.Collections {
+		Success(fmt.Sprintf("(%v) %v", collection.Id, collection.Name))
+	}
+}
+func getCollection() {
+	Info("\nRunning Get Collection API")
+
+	response, err := databasesSdk.GetCollection(dbId, collectionId)
+	if err != nil {
+		panic(err)
+	}
+
+	Success("Collection details")
+	fmt.Printf("Id: %v\n", green.Render(response.Id))
+	fmt.Printf("Name: %v\n", green.Render(response.Name))
+	fmt.Printf("CreatedAt: %v\n", green.Render(response.CreatedAt))
+	fmt.Printf("UpdatedAt: %v\n", green.Render(response.UpdatedAt))
+}
+
+func updateCollection() {
+	Info("\nRunning Update Collection API")
+
+	response, err := databasesSdk.UpdateCollection(dbId, collectionId, "Updated Collection")
+	if err != nil {
+		panic(err)
+	}
+
+	Success("Collection details")
+	fmt.Printf("Id: %v\n", green.Render(response.Id))
+	fmt.Printf("Name: %v\n", green.Render(response.Name))
+	fmt.Printf("CreatedAt: %v\n", green.Render(response.CreatedAt))
+	fmt.Printf("UpdatedAt: %v\n", green.Render(response.UpdatedAt))
+
+}
+func listAttributes() {
+	Info("\nRunning List Attributes API")
+	response, err := databasesSdk.ListAttributes(dbId, collectionId)
+	if err != nil {
+		panic(err)
+	}
+
+	Success("Attributes list:")
+	for _, attribute := range response.Attributes {
+		fmt.Printf("Key: %v, Type: %v ", green.Render(attribute["key"].(string)), green.Render(attribute["type"].(string)))
+	}
+}
+
+func createDocument() {
+	Info("\nRunning Add Document API")
+	response, err := databasesSdk.CreateDocument(
+		dbId,
 		collectionId,
 		id.Unique(),
-		map[string]interface{}{
+		map[string]any{
 			"name":         "Spider Man",
 			"release_year": 1920,
-			"rating":       99,
-			"kids":         false,
-			"email":        "example@email.com",
-		})
+		},
+		databasesSdk.WithCreateDocumentPermissions([]string{
+			permission.Read(role.Any()),
+			permission.Update(role.Users("")),
+			permission.Delete(role.Users("")),
+		}),
+	)
+	if err != nil {
+		panic(err)
+	}
 
-	documentId = document.Id
+	Success("Document created")
+	documentId = response.Id
+}
+func listDocuments() {
+	Info("\nRunning List Documents API")
+	response, err := databasesSdk.ListDocuments(dbId, collectionId)
 
-	print(document)
+	if err != nil {
+		panic(err)
+	}
+
+	Success("Document list:")
+
+	var documents ExampleDocuments
+	err = response.Decode(&documents)
+
+	if err != nil {
+		panic(err)
+	}
+
+	for _, document := range documents.Documents {
+		Success(fmt.Sprintf("(%v) %v - %v", document.Id, document.Name, document.ReleaseYear))
+	}
 }
 
-func ListDocuments() {
-	fmt.Println("Running List Document API")
+func getDocument() {
+	Info("\nRunning Get Document API")
+	response, err := databasesSdk.GetDocument(dbId, collectionId, documentId)
+	if err != nil {
+		panic(err)
+	}
+	var document ExampleDocument
+	err = response.Decode(&document)
 
-	documents, _ := appwriteDatabase.ListDocuments(databaseId, collectionId)
+	if err != nil {
+		panic(err)
+	}
 
-	print(documents)
+	Success("Document Details:")
+	Success(fmt.Sprintf("(%v) %v - %v", document.Id, document.Name, document.ReleaseYear))
+
 }
+func updateDocument() {
+	Info("\nRunning Update Document API")
 
-func DeleteDocument() {
-	fmt.Println("Running Delete Document API")
-
-	response, _ := appwriteDatabase.DeleteDocument(
-		databaseId,
+	response, err := databasesSdk.UpdateDocument(
+		dbId,
 		collectionId,
 		documentId,
+		databasesSdk.WithUpdateDocumentData(map[string]any{"release_year": 2005}),
 	)
+	if err != nil {
+		panic(err)
+	}
+	var document ExampleDocument
+	err = response.Decode(&document)
 
-	print(response)
+	Success("Document Details:")
+	Success(fmt.Sprintf("(%v) release_year=%v", document.Id, document.ReleaseYear))
 }
 
-func CreateBucket() {
-	fmt.Println("Running Create Bucket API")
+func deleteDocument() {
+	Info("\nRunning Delete Document API")
 
-	bucket, _ := appwriteStorage.CreateBucket(
-		id.Unique(),
-		"awesome-bucket",
-		appwriteStorage.WithCreateBucketFileSecurity(false),
-		appwriteStorage.WithCreateBucketPermissions(
-			[]string{
-				permission.Read("any"),
-				permission.Create("any"),
-			}))
+	_, err := databasesSdk.DeleteDocument(dbId, collectionId, documentId)
+	if err != nil {
+		panic(err)
+	}
 
-	bucketId = bucket.Id
-
-	print(bucket)
-}
-
-func ListBuckets() {
-	fmt.Println("Running List Buckets API")
-
-	buckets, _ := appwriteStorage.ListBuckets()
-
-	print(buckets)
-}
-
-// func UploadFile() { // TODO: Fix how we send content range etc in SDK Go
-// 	fmt.Println("Running Upload File API")
-
-// 	var file, _ = appwriteStorage.CreateFile(
-// 		bucket_id,
-// 		id.Unique(),
-// 		file.NewInputFile("./resources/nature.jpg", "file.jpg"),
-// 		appwriteStorage.WithCreateFilePermissions(
-// 			[]string{
-// 				permission.Read("any"),
-// 			}))
-
-// 	fileId = file.Id
-
-// 	print(file)
-// }
-
-func ListFiles() {
-	fmt.Println("Running List Files API")
-
-	var files, _ = appwriteStorage.ListFiles(bucketId)
-
-	print(files)
-}
-
-func DeleteFile() {
-	fmt.Println("Running Delete File API")
-
-	var response, _ = appwriteStorage.DeleteFile(bucketId, fileId)
-
-	print(response)
-}
-
-func DeleteBucket() {
-	fmt.Println("Running Delete Bucket API")
-
-	var response, _ = appwriteStorage.DeleteBucket(bucketId)
-
-	print(response)
-}
-
-func CreateFunction() {
-	fmt.Println("Running Create Function API")
-
-	var function, _ = appwriteFunction.Create(
-		id.Unique(),
-		"Test Function",
-		"python-3.9",
-		appwriteFunction.WithCreateExecute(
-			[]string{
-				"any",
-			}))
-
-	functionId = function.Id
-
-	print(function)
-}
-
-func ListFunctions() {
-	fmt.Println("Runnnig List Functions API")
-
-	var functions, _ = appwriteFunction.List()
-
-	print(functions)
-}
-
-func DeleteFunction() {
-	fmt.Println("Running Delete Function API")
-
-	var response, _ = appwriteFunction.Delete(functionId)
-
-	print(response)
+	Success("Document deleted")
 }
