@@ -1,6 +1,6 @@
 module github.com/appwrite/playground-for-go
 
-go 1.22.5
+go 1.25.0
 
 require github.com/appwrite/sdk-for-go v0.0.1-rc.8
 
@@ -14,5 +14,5 @@ require (
 	github.com/mattn/go-runewidth v0.0.15 // indirect
 	github.com/muesli/termenv v0.15.2 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
-	golang.org/x/sys v0.19.0 // indirect
+	golang.org/x/sys v0.44.0 // indirect
 )
