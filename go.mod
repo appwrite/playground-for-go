@@ -4,7 +4,7 @@ go 1.25.0
 
 require github.com/appwrite/sdk-for-go v0.0.1-rc.8
 
-require github.com/charmbracelet/lipgloss v0.12.1
+require github.com/charmbracelet/lipgloss/v2 v2.1.1
 
 require (
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
